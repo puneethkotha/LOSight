@@ -4,7 +4,7 @@ import { AGE_GROUPS, SEVERITY_LABELS, REGIONS, CLINICAL_CLUSTERS, GMLOS_BY_CLUST
 
 export function Simulator() {
   const [ageGroup, setAgeGroup] = useState("30-49");
-  const [severity, setSeverity] = useState(2);
+  const [severity, setSeverity] = useState<number>(2);
   const [region, setRegion] = useState("New York");
   const [clinicalCluster, setClinicalCluster] = useState("Heart Failure");
   const [isEmergent, setIsEmergent] = useState(true);
@@ -12,7 +12,7 @@ export function Simulator() {
 
   const gmlos = GMLOS_BY_CLUSTER[clinicalCluster] ?? 5;
 
-  const computeBin = (): number => {
+  const computeBin = (): { bin: number; score: number } => {
     let score = 0;
     const ageScores: Record<string, number> = { "18-29": 0, "30-49": 0.2, "50-69": 0.4, "70+": 0.6 };
     score += ageScores[ageGroup] ?? 0.2;
@@ -22,12 +22,12 @@ export function Simulator() {
     if (isMedicare) score += 0.1;
     if (region === "Western NY" || region === "Central NY") score += 0.05;
 
-    if (score < 0.35) return 0;
-    if (score < 0.6) return 1;
-    return 2;
+    if (score < 0.35) return { bin: 0, score };
+    if (score < 0.6) return { bin: 1, score };
+    return { bin: 2, score };
   };
 
-  const predictedBin = computeBin();
+  const { bin: predictedBin, score: riskScore } = computeBin();
 
   return (
     <div className="space-y-10">
@@ -67,12 +67,12 @@ export function Simulator() {
             <label htmlFor="sim-severity" className="block text-sm font-medium text-slate-700 mb-2">Severity of Illness (0-4)</label>
             <select
               id="sim-severity"
-              value={severity}
-              onChange={(e) => setSeverity(Number(e.target.value))}
+              value={String(severity)}
+              onChange={(e) => setSeverity(parseInt(e.target.value, 10))}
               className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-teal-500"
             >
               {SEVERITY_LABELS.map((_, i) => (
-                <option key={i} value={i}>{i}: {SEVERITY_LABELS[i]}</option>
+                <option key={i} value={String(i)}>{i}: {SEVERITY_LABELS[i]}</option>
               ))}
             </select>
           </div>
@@ -144,8 +144,13 @@ export function Simulator() {
               {predictedBin === 2 && "Very long stay. Recommend discharge planning from day 1."}
             </p>
           </div>
-          <div className="mt-4 p-3 bg-slate-50 rounded-lg text-sm text-slate-600">
-            <span className="font-medium">GMLOS for {clinicalCluster}:</span> {gmlos} days
+          <div className="mt-4 space-y-2">
+            <div className="p-3 bg-slate-50 rounded-lg text-sm text-slate-600">
+              <span className="font-medium">GMLOS for {clinicalCluster}:</span> {gmlos} days
+            </div>
+            <div className="p-3 bg-slate-100 rounded-lg text-xs text-slate-500">
+              Risk score: {(riskScore * 100).toFixed(1)} (updates as you change inputs)
+            </div>
           </div>
         </div>
       </section>
