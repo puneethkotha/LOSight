@@ -10,7 +10,7 @@ import { Simulator } from "./pages/Simulator";
 
 function App() {
   return (
-    <BrowserRouter basename={import.meta.env.BASE_URL === './' ? '/LOSight' : (import.meta.env.BASE_URL?.replace(/\/$/, '') || '')}>
+    <BrowserRouter basename={import.meta.env.BASE_URL?.replace(/\/$/, '') || ''}>
       <Routes>
         <Route path="/" element={<Layout />}>
           <Route index element={<Overview />} />
